@@ -1,5 +1,8 @@
 #!/bin/bash
 
+sudo apt-get update
+sudo apt-get install git
+
 # 获取当前目录
 current_dir=$PWD
 
@@ -45,7 +48,7 @@ else
     # 检查 .NET SDK 是否已下载
     DOTNET_SDK_URL="https://download.visualstudio.microsoft.com/download/pr/12ee34e8-640c-400e-a6dc-4892b442df92/81d40fc98a5bbbfbafa4cc1ab86d6288/dotnet-sdk-6.0.427-linux-x64.tar.gz"
     DOTNET_SDK_FILE="dotnet-sdk-6.0.427-linux-x64.tar.gz"
-    DOTNET_DIR="$HOME/dotnet"
+    DOTNET_DIR="$HOME/.dotnet"
 
     echo ".NET 环境未检测到，正在检查 .NET SDK 文件是否已下载..."
 
@@ -75,7 +78,7 @@ else
     source $HOME/.bashrc
 
     # 删除下载的文件（如果安装成功）
-    if command -v dotnet &>/dev/null; then
+    if command -v dotnet &> /dev/null; then
         echo ".NET SDK 安装成功，删除下载的文件..."
         rm -f $DOTNET_SDK_FILE
     else
@@ -92,7 +95,6 @@ if command -v python3 &>/dev/null; then
     echo "Python 环境已安装：$PYTHON_VERSION ,推荐版本 Python 3.8.2 "
 else
     echo "未检测到 Python 环境，正在安装 Python 3.8..."
-    sudo apt-get update
     sudo apt-get install python3.8 python3.8-venv python3.8-dev
     echo "Python 3.8 安装完成"
 fi
