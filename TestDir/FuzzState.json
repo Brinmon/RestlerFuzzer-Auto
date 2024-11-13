@@ -1,0 +1,8 @@
+{
+    "unzip_target_file": true,
+    "compile_openapi_document": true,
+    "execute_build_script": true,
+    "execute_start_script": true,
+    "start_fuzzing": true,
+    "output_fuzzing_results": true
+}

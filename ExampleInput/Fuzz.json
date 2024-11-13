@@ -1,0 +1,12 @@
+{
+    "fuzz_task_name": "example_fuzz_task",
+    "package_filename": "fuzz_target_package.zip",
+    "api_spec_name": "swagger_doc.yaml",
+    "compile_script_name": "compile_fuzz_target.sh",
+    "start_script_name": "start_fuzz_target.sh",
+    "fuzz_execution_time": "2024-11-13T10:00:00Z",
+    "target_ip": "192.168.1.100",
+    "target_port": "8080",
+    "use_ssl": true
+}
+  
