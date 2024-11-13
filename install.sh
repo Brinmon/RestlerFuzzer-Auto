@@ -1,38 +1,7 @@
 #!/bin/bash
-
+set -e  # 使脚本在遇到错误时立即退出
 sudo apt-get update
-sudo apt-get install git
-
-# 获取当前目录
-current_dir=$PWD
-
-# 检查是否已设置环境变量 RESTLERFUZZERAUTO_ROOT
-if [ -z "$RESTLERFUZZERAUTO_ROOT" ]; then
-    echo "未检测到环境变量 RESTLERFUZZERAUTO_ROOT，使用当前目录 ($current_dir) 作为默认值。"
-    export RESTLERFUZZERAUTO_ROOT=$current_dir
-    # 永久化环境变量 RESTLERFUZZERAUTO_ROOT
-    echo "正在设置环境变量 RESTLERFUZZERAUTO_ROOT..."
-    echo "export RESTLERFUZZERAUTO_ROOT=$current_dir" >> $HOME/.bashrc
-    source $HOME/.bashrc
-    echo "已将 RESTLERFUZZERAUTO_ROOT 环境变量持久化，路径为 $RESTLERFUZZERAUTO_ROOT"
-else
-    echo "当前环境变量 RESTLERFUZZERAUTO_ROOT 已设置为 $RESTLERFUZZERAUTO_ROOT"
-    # 检查当前目录与已设置的环境变量是否一致
-    if [ "$RESTLERFUZZERAUTO_ROOT" != "$current_dir" ]; then
-        echo "当前目录 ($current_dir) 与已设置的 RESTLERFUZZERAUTO_ROOT ($RESTLERFUZZERAUTO_ROOT) 不一致。"
-        read -p "是否更新环境变量 RESTLERFUZZERAUTO_ROOT 为当前目录？(y/n): " choice
-        if [ "$choice" == "y" ]; then
-            export RESTLERFUZZERAUTO_ROOT=$current_dir
-            # 更新并永久化环境变量
-            echo "正在更新并设置环境变量 RESTLERFUZZERAUTO_ROOT..."
-            echo "export RESTLERFUZZERAUTO_ROOT=$current_dir" >> $HOME/.bashrc
-            source $HOME/.bashrc
-            echo "已将 RESTLERFUZZERAUTO_ROOT 环境变量持久化，路径为 $RESTLERFUZZERAUTO_ROOT"
-        else
-            echo "未更新环境变量。"
-        fi
-    fi
-fi
+sudo apt-get install wget libicu-dev vim -y
 
 # 检查 .NET 环境
 if command -v dotnet &>/dev/null; then
@@ -51,7 +20,6 @@ else
     DOTNET_DIR="$HOME/.dotnet"
 
     echo ".NET 环境未检测到，正在检查 .NET SDK 文件是否已下载..."
-
     # 如果文件不存在，则下载
     if [ ! -f "$DOTNET_SDK_FILE" ]; then
         echo "未检测到 SDK 文件，正在下载 .NET SDK..."
@@ -69,13 +37,6 @@ else
     echo "安装完成，正在设置环境变量..."
     export DOTNET_ROOT=$DOTNET_DIR
     export PATH=$PATH:$DOTNET_ROOT
-
-    # 将 DOTNET_ROOT 和 PATH 持久化到 ~/.bashrc
-    echo 'export DOTNET_ROOT=$HOME/dotnet' >> $HOME/.bashrc
-    echo 'export PATH=$PATH:$DOTNET_ROOT' >> $HOME/.bashrc
-
-    # 使配置立即生效
-    source $HOME/.bashrc
 
     # 删除下载的文件（如果安装成功）
     if command -v dotnet &> /dev/null; then
@@ -95,10 +56,14 @@ if command -v python3 &>/dev/null; then
     echo "Python 环境已安装：$PYTHON_VERSION ,推荐版本 Python 3.8.2 "
 else
     echo "未检测到 Python 环境，正在安装 Python 3.8..."
-    sudo apt-get install python3.8 python3.8-venv python3.8-dev
+    sudo apt-get install python3.8 python3.8-venv python3.8-dev -y
     echo "Python 3.8 安装完成"
 fi
 
+# 获取当前目录
+current_dir=$PWD
+echo "未检测到环境变量 RESTLERFUZZERAUTO_ROOT，使用当前目录 ($current_dir) 作为默认值。"
+export RESTLERFUZZERAUTO_ROOT=$current_dir
 
 # 检查目标项目目录是否已存在
 if [ -d "$RESTLERFUZZERAUTO_ROOT/restler-fuzzer" ]; then
@@ -117,4 +82,9 @@ else
     echo "未找到 build-RestlerAuto.py 脚本文件"
 fi
 
-echo "安装和编译过程完成,需要重新启动一个新的会话环境变量才会生效!"
+# 将 DOTNET_ROOT 和 PATH 持久化到 ~/.bashrc
+echo 'export DOTNET_ROOT=$HOME/.dotnet' >> $HOME/.bashrc
+echo 'export PATH=$PATH:$DOTNET_ROOT' >> $HOME/.bashrc
+echo "export RESTLERFUZZERAUTO_ROOT=$current_dir" >> $HOME/.bashrc
+
+echo "安装和编译过程完成,需要重新启动一个新的会话环境变量才会生效!或者运行source ~/.bashrc"
