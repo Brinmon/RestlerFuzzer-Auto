@@ -75,8 +75,6 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
         "fuzz_work_path": CrrentFuzzWorkPath,
     }
 
-
-
     # 步骤0: 解压上传上来的目标文件
     INFO(f"开始解压上传的目标文件{Package_Filename}...")
     try:
@@ -114,7 +112,7 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
     except Exception as e:
         ERR(f"执行{StartScriptFile}失败: {e},可能存在问题!")
         update_fuzz_state(FuzzStateFile, "execute_start_script", False)
-    print(WebTargetProcess.pid)
+    
     # 捕获 SIGINT 信号并执行清理操作
     signal.signal(signal.SIGINT, lambda signal, frame: handle_exit_signal(signal, frame, WebTargetProcess))
     # 注册程序退出时执行清理函数

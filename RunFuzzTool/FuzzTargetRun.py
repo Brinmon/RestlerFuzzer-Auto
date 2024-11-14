@@ -1,4 +1,5 @@
 from RunFuzzTool import *
+import psutil # type: ignore
 
 def is_port_open(host, port):
     """ 检查指定端口是否开放 """
@@ -13,11 +14,27 @@ def is_port_open(host, port):
         sock.close()
 
 def stop_web_service(process):
-    """ 停止 Web 服务 """
+    """ 停止 Web 服务及其所有子进程 """
     INFO("准备停止 Web 服务...")
-    process.terminate()  # 或者使用 process.kill()
-    process.wait()
-    INFO("Web 服务已停止!")
+
+    # 保存父进程的 PID
+    parent_pid = process.pid
+    
+    # 终止所有子进程
+    parent = psutil.Process(parent_pid)
+    for child in parent.children(recursive=True):  # 获取所有子进程
+        child.terminate()  # 发送终止信号
+        DBG(f"终止子进程 {child.pid}")
+
+    # 终止父进程
+    process.terminate()
+
+    # 确保所有进程都已停止
+    process.wait()  # 等待父进程结束
+    for child in parent.children(recursive=True):
+        child.wait()  # 等待所有子进程结束
+
+    INFO("Web 服务及其所有子进程已停止!")
 
 def handle_exit_signal(signal, frame, process):
     """ 捕获 SIGINT 信号时停止 Web 服务 """

@@ -60,7 +60,7 @@ if command -v python3 &>/dev/null; then
     echo "Python 环境已安装：$PYTHON_VERSION ,推荐版本 Python 3.8.2 "
 else
     echo "未检测到 Python 环境，正在安装 Python 3.8..."
-    sudo apt-get install python3.8 python3.8-venv python3.8-dev -y
+    sudo apt-get install python3.8 python3.8-venv python3.8-dev python3-pip -y
     echo "Python 3.8 安装完成"
 fi
 
