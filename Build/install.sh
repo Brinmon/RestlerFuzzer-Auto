@@ -1,4 +1,9 @@
 #!/bin/bash
+# 获取当前脚本的绝对路径
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+# 获取上级文件夹的上级文件夹路径
+PARENT_DIR=$(dirname "$SCRIPT_DIR")
+
 set -e  # 使脚本在遇到错误时立即退出
 sudo apt-get update
 sudo apt-get install wget libicu-dev vim -y
@@ -63,20 +68,20 @@ fi
 current_dir=$PWD
 
 # 检查目标项目目录是否已存在
-if [ -d "$PWD/restler-fuzzer" ]; then
+if [ -d "$PARENT_DIR/Build/restler-fuzzer" ]; then
     echo "restler-fuzzer 项目已存在，跳过克隆步骤..."
 else
     # 克隆目标项目
     echo "正在克隆 restler-fuzzer 项目..."
-    git clone https://github.com/microsoft/restler-fuzzer.git
+    git clone https://github.com/microsoft/restler-fuzzer.git  $PARENT_DIR/Build/restler-fuzzer/
 fi
 
 # 直接编译目标程序restler_bin
 if [[ -f "build-RestlerAuto.py" ]]; then
     echo "开始执行 build-RestlerAuto.py 脚本..."
-    sudo python3 ./build-RestlerAuto.py --repository_root_dir $PWD/restler-fuzzer --dest_dir /usr/local/bin/restler_bin/
+    sudo python3 $PARENT_DIR/Build/build-RestlerAuto.py --repository_root_dir $PARENT_DIR/Build/restler-fuzzer/ --dest_dir $PARENT_DIR/restler_bin/
 else
     echo "未找到 build-RestlerAuto.py 脚本文件"
 fi
 
-echo "安装和编译过程完成!如果需要删除本工具只需要删除/usr/local/bin/restler_bin/ 和 /usr/local/bin/dotnet 即可"
+echo "安装和编译过程完成，如果需要删除本工具只需要删除dotnet即可"

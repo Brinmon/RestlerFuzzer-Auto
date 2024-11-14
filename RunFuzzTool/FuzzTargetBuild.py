@@ -1,8 +1,9 @@
-import argparse
 import contextlib
 import os
 import subprocess
-import json
+
+import zipfile
+import tarfile
 from pathlib import Path
 
 #路径常量
@@ -52,23 +53,19 @@ def usedir(dir):
 #编译swagger或openapi文件
 def compile_spec(fuzz_config):
     """ 编译指定的 API 规范
-
-    @param api_spec_path: 要编译的 Swagger 文件的绝对路径
-    @type  api_spec_path: 字符串
-    @param restler_dll_path: RESTler 驱动程序 DLL 的绝对路径
-    @type  restler_dll_path: 字符串
-
-    @return: None
-    @rtype : None
-
+    使用的参数有:
+    fuzz_config['fuzz_work_path']
+    fuzz_config['api_spec_name']
+    fuzz_config['api_spec_file']
     """
+    
+    # 获取当前文件的绝对路径
+    current_file_path = os.path.abspath(__file__)
+    # 获取当前文件所在的目录
+    current_directory = os.path.dirname(current_file_path)
     DBG(f"开始编译OpenAPI文档: {fuzz_config['api_spec_name']}")
-    # 读取环境中Restler的相关环境变量
-    # 检查环境变量是否存在
-    restlerbin_root = os.environ.get('RESTLERBIN_ROOT')
-    if restlerbin_root is None:
-        restlerbin_root = '/usr/local/bin/restler_bin'
-    restler_dll_path = Path(restlerbin_root).joinpath('restler','Restler.dll')   # 获取环境变量中的根路径并添加restler_bin
+
+    restler_dll_path = Path(current_directory).joinpath('restler_bin','restler','Restler.dll')   
     DBG(f"找到的Dll路径为: {restler_dll_path}")
     if not restler_dll_path.exists():  # 检查构建的DLL路径是否存在
         ERR(f"Restler DLL路径{restler_dll_path}不存在!请检查环境是否配置正确!")  # 如果不存，打印错误信息
@@ -93,5 +90,30 @@ def compile_target(config, working_dir):
 def execute_script(script_name, working_dir):
     pass
 
-def unzip_file(zip_path, extract_to):
-    pass
+def unzip_file(fuzz_config):
+    """编译指定的 API 规范
+    使用的参数有:
+    fuzz_config['package_filename']
+    fuzz_config['fuzz_work_path']
+    """
+    package_filename = fuzz_config['package_filename']
+    fuzz_work_path = fuzz_config['fuzz_work_path']
+    
+    DBG(f"开始解压上传上来的文件: {package_filename}")
+    
+    # 确保工作目录存在
+    os.makedirs(fuzz_work_path, exist_ok=True)
+
+    # 根据文件扩展名判断解压方式
+    if package_filename.endswith('.zip'):
+        with zipfile.ZipFile(package_filename, 'r') as zip_ref:
+            zip_ref.extractall(fuzz_work_path)
+            DBG(f"已解压缩 ZIP 文件到: {fuzz_work_path}")
+            
+    elif package_filename.endswith(('.tar', '.tar.gz', '.tar.bz2')):
+        with tarfile.open(package_filename, 'r:*') as tar_ref:
+            tar_ref.extractall(fuzz_work_path)
+            DBG(f"已解压缩 TAR 文件到: {fuzz_work_path}")
+    
+    else:
+        DBG(f"不支持的文件格式: {package_filename}")

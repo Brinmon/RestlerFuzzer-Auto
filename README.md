@@ -20,3 +20,9 @@ Collecting logs...
 DEBUG: 执行完毕!
 ```
 
+# Examples
+```d
+ub20@ub20:~/RestlerFuzzer-Auto/ExampleInput$ ls
+build.sh  Fuzz.json  open_api_3.yaml  qri  start.sh
+
+```
