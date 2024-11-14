@@ -47,13 +47,16 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
     # 路径配置
     FuzzStateFile = os.path.join(FuzzStateFilePath, "FuzzState.json")
     UploadPackageFile = os.path.join(UploadPath, Package_Filename)
-    APISpecFile = os.path.join(UploadPath, APISpec_Filename)
-    CompileScriptFile = os.path.join(UploadPath, CompileScript_Filename)
-    StartScriptFile = os.path.join(UploadPath, StartScript_Filename)
 
+    #工作路径配置
     FuzzTaskName = Fuzzconfigfile["fuzz_task_name"]
     ProjectID = Fuzzconfigfile["project_id"]
     CrrentFuzzWorkPath = Path(os.path.abspath(RESTLERFUZZ_ALLWORK_DIR)).joinpath(f"{FuzzTaskName}_{ProjectID}") # Fuzz工作目录
+
+    APISpecFile = os.path.join(CrrentFuzzWorkPath, APISpec_Filename)
+    CompileScriptFile = os.path.join(CrrentFuzzWorkPath, CompileScript_Filename)
+    StartScriptFile = os.path.join(CrrentFuzzWorkPath, StartScript_Filename)
+
 
 
     # 存储这些信息工来工作使用

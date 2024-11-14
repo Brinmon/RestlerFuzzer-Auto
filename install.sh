@@ -33,11 +33,10 @@ else
     mkdir -p $DOTNET_DIR
     tar -zxf $DOTNET_SDK_FILE -C $DOTNET_DIR
 
-    # 设置 DOTNET_ROOT 和 PATH
-    echo "安装完成，正在设置环境变量..."
-    export DOTNET_ROOT=$DOTNET_DIR
-    export PATH=$PATH:$DOTNET_ROOT
-
+    # 创建符号链接到已在 PATH 中的目录
+    echo "安装完成，正在创建符号链接..."
+    sudo ln -s $DOTNET_DIR/dotnet /usr/local/bin/dotnet
+    
     # 删除下载的文件（如果安装成功）
     if command -v dotnet &> /dev/null; then
         echo ".NET SDK 安装成功，删除下载的文件..."
@@ -62,11 +61,9 @@ fi
 
 # 获取当前目录
 current_dir=$PWD
-echo "未检测到环境变量 RESTLERFUZZERAUTO_ROOT，使用当前目录 ($current_dir) 作为默认值。"
-export RESTLERFUZZERAUTO_ROOT=$current_dir
 
 # 检查目标项目目录是否已存在
-if [ -d "$RESTLERFUZZERAUTO_ROOT/restler-fuzzer" ]; then
+if [ -d "$PWD/restler-fuzzer" ]; then
     echo "restler-fuzzer 项目已存在，跳过克隆步骤..."
 else
     # 克隆目标项目
@@ -77,14 +74,9 @@ fi
 # 直接编译目标程序restler_bin
 if [[ -f "build-RestlerAuto.py" ]]; then
     echo "开始执行 build-RestlerAuto.py 脚本..."
-    python3 ./build-RestlerAuto.py --repository_root_dir $RESTLERFUZZERAUTO_ROOT/restler-fuzzer --dest_dir ./restler_bin/
+    sudo python3 ./build-RestlerAuto.py --repository_root_dir $PWD/restler-fuzzer --dest_dir /usr/local/bin/restler_bin/
 else
     echo "未找到 build-RestlerAuto.py 脚本文件"
 fi
 
-# 将 DOTNET_ROOT 和 PATH 持久化到 ~/.bashrc
-echo 'export DOTNET_ROOT=$HOME/.dotnet' >> $HOME/.bashrc
-echo 'export PATH=$PATH:$DOTNET_ROOT' >> $HOME/.bashrc
-echo "export RESTLERFUZZERAUTO_ROOT=$current_dir" >> $HOME/.bashrc
-
-echo "安装和编译过程完成,需要重新启动一个新的会话环境变量才会生效!或者运行source ~/.bashrc"
+echo "安装和编译过程完成!如果需要删除本工具只需要删除/usr/local/bin/restler_bin/ 和 /usr/local/bin/dotnet 即可"

@@ -65,20 +65,25 @@ def compile_spec(fuzz_config):
     DBG(f"开始编译OpenAPI文档: {fuzz_config['api_spec_name']}")
     # 读取环境中Restler的相关环境变量
     # 检查环境变量是否存在
-    restler_root = os.environ.get('RESTLERFUZZERAUTO_ROOT')
-    if restler_root is None:
-        raise ValueError("环境变量 $RESTLERFUZZERAUTO_ROOT 未设置，请检查配置！")
-    restler_dll_path = Path(restler_root).joinpath('restler_bin','Restler.dll')   # 获取环境变量中的根路径并添加restler_bin
+    restlerbin_root = os.environ.get('RESTLERBIN_ROOT')
+    if restlerbin_root is None:
+        restlerbin_root = '/usr/local/bin/restler_bin'
+    restler_dll_path = Path(restlerbin_root).joinpath('restler','Restler.dll')   # 获取环境变量中的根路径并添加restler_bin
     DBG(f"找到的Dll路径为: {restler_dll_path}")
     if not restler_dll_path.exists():  # 检查构建的DLL路径是否存在
-        ERR(f"Restler DLL路径{restler_dll_path}不存在!请检查环境变量是否配置正确!")  # 如果不存，打印错误信息
-        raise ValueError("$RESTLERFUZZERAUTO_ROOT 环境变量配置异常!")
+        ERR(f"Restler DLL路径{restler_dll_path}不存在!请检查环境是否配置正确!")  # 如果不存，打印错误信息
+        raise ValueError("Restler DLL路径不存在!请检查环境变量配置异常!")
     
+    #创建目标工作目录
+    if not os.path.exists(fuzz_config['fuzz_work_path']):
+        os.makedirs(fuzz_config['fuzz_work_path'])
+
     DBG(f"执行编译编译命令")
     with usedir(fuzz_config['fuzz_work_path']):
         command=f"dotnet \"{restler_dll_path}\" compile --api_spec \"{fuzz_config['api_spec_file']}\""
         print(f"command: {command}")
         subprocess.run(command, shell=True)
+        DBG(f"执行完毕!")
 
 # 编译目标程序
 def compile_target(config, working_dir):
