@@ -1,48 +1,6 @@
 from FuzzTargetBuild import *
 
-#路径常量
-RESTLERFUZZ_TEMP_DIR = '/restler_work_dir'
 
-# 全局调试标志
-debug_mode = False
-info_mode = True
-
-# 设置输出模式
-def set_print_mode(info_enabled, debug_enabled):
-    """设置输出模式"""
-    global info_mode, debug_mode
-    info_mode = info_enabled
-    debug_mode = debug_enabled
-   
-def DBG(message):
-    """输出调试信息 (蓝色)"""
-    if debug_mode:
-        print(f"\033[94mDEBUG: {message}\033[0m")  # ANSI 转义序列，\033[94m 是蓝色，\033[0m 重置为默认颜色
-
-def ERR(message):
-    """输出错误信息 (红色)"""
-    print(f"\033[91mERROR: {message}\033[0m")  # ANSI 转义序列，\033[91m 是红色，\033[0m 重置为默认颜色
-
-def INFO(message):
-    """输出信息 (绿色)"""
-    if info_mode:
-        print(f"\033[92mINFO: {message}\033[0m")  # ANSI 转义序列，\033[92m 是绿色，\033[0m 重置为默认颜色
-
-
-
-@contextlib.contextmanager
-def usedir(dir):
-    """ 一个帮助器，适用于 'with' 语句，用于将当前目录更改为
-    @dir，且在 'with' 结束后将目录更改回原始目录。
-
-    可以被视为 pushd，'with' 范围结束后自动执行 popd
-    """
-    curr = os.getcwd()  # 获取当前工作目录
-    os.chdir(dir)  # 切换到指定的目录
-    try:
-        yield  # 生成器，可以在 with 块内执行代码
-    finally:
-        os.chdir(curr)  # 确保在结束时切换回原来的目录
 
 #读取json文件
 def read_config(file_path):
@@ -93,17 +51,30 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
     CompileScriptFile = os.path.join(UploadPath, CompileScript_Filename)
     StartScriptFile = os.path.join(UploadPath, StartScript_Filename)
 
-    FuzzWorkPath = os.path.join(UploadPath, StartScript_Filename)  # Fuzz工作目录
+    FuzzTaskName = Fuzzconfigfile["fuzz_task_name"]
+    ProjectID = Fuzzconfigfile["project_id"]
+    CrrentFuzzWorkPath = Path(os.path.abspath(RESTLERFUZZ_ALLWORK_DIR)).joinpath(f"{FuzzTaskName}_{ProjectID}") # Fuzz工作目录
 
-    # 读取环境中Restler的相关环境变量
-    restler_dll_path = Path(os.environ.get('RESTLERFUZZERAUTO_ROOT')+'/restler_bin')   # 获取环境变量中的根路径并添加restler_bin
-    if not restler_dll_path.exists():  # 检查构建的DLL路径是否存在
-        ERR(f"Restler DLL路径{restler_dll_path}不存在!请检查环境变量是否配置正确!")  # 如果不存，打印错误信息
-        return  # 退出当前函数
+
+    # 存储这些信息工来工作使用
+    Fuzz_config = {
+        "package_filename": Package_Filename,
+        "api_spec_name": APISpec_Filename,
+        "compile_script_name": CompileScript_Filename,
+        "start_script_name": StartScript_Filename,
+        "fuzz_state_file": FuzzStateFile,
+        "upload_package_file": UploadPackageFile,
+        "api_spec_file": APISpecFile,
+        "compile_script_file": CompileScriptFile,
+        "start_script_file": StartScriptFile,
+        "fuzz_work_path": CrrentFuzzWorkPath,
+    }
+
+
 
     # 步骤0: 解压上传上来的目标文件
     try:
-        unzip_file(UploadPackageFile, None)
+        # unzip_file(UploadPackageFile, None)
         update_fuzz_state(FuzzStateFile, "unzip_target_file", True)
     except Exception as e:
         ERR(f"解压目标文件{Package_Filename}失败: {e},整个Fuzz无法启动!运行终止")
@@ -112,7 +83,7 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
 
     # 步骤1: 编译目标的OpenAPI文档
     try:
-        compile_spec(APISpecFile, restler_dll_path.absolute())
+        compile_spec(Fuzz_config)
         update_fuzz_state(FuzzStateFile, "compile_openapi_document", True)
     except Exception as e:
         print(f"编译OpenAPI文档失败: {e},整个Fuzz无法启动!运行终止")
@@ -156,15 +127,24 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--jsonfile',
                         help='读取json文件',
-                        type=str, required=False, default=None)
+                        type=str, required=True, default=None)
     parser.add_argument('--uploadPath',
                         help='上传的压缩包文件路径',
-                        type=str, required=False, default=None)
-    parser.add_argument('--FuzzStatePath',
+                        type=str, required=True, default=None)
+    parser.add_argument('--FuzzStateOutputPath',
                         help='希望Fuzz状态的输出路径',
-                        type=str, required=False, default=None)
-    parser.add_argument('--FuzzWorkPath',
-                        help='希望Fuzz状态的输出路径',
+                        type=str, required=True, default=None)
+    parser.add_argument('--ALLFuzzWorkPath',
+                        help='所有项目希望工作的目录',
                         type=str, required=False, default=None)
     args = parser.parse_args()
-    AutoFuzzMain(args.jsonfile,args.uploadPath,args.FuzzStatePath)
+
+    # 使用 ALLFuzzWorkPath 参数
+    if args.ALLFuzzWorkPath:
+        RESTLERFUZZ_ALLWORK_DIR = args.ALLFuzzWorkPath
+    
+    #创建目标工作目录
+    if not os.path.exists(RESTLERFUZZ_ALLWORK_DIR):
+        os.makedirs(RESTLERFUZZ_ALLWORK_DIR)
+
+    AutoFuzzMain(args.jsonfile,args.uploadPath,args.FuzzStateOutputPath)
