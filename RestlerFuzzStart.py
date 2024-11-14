@@ -1,6 +1,8 @@
 import json
 import argparse
-from RunFuzzTool.FuzzTargetBuild import *    
+from RunFuzzTool.FuzzTargetBuild import *
+from RunFuzzTool.FuzzTargetRun import *
+
 
 #读取json文件
 def read_config(file_path):
@@ -60,7 +62,7 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
 
 
     # 存储这些信息工来工作使用
-    Fuzz_config = {
+    Fuzz_Fileconfig = {
         "package_filename": Package_Filename,
         "api_spec_name": APISpec_Filename,
         "compile_script_name": CompileScript_Filename,
@@ -76,8 +78,9 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
 
 
     # 步骤0: 解压上传上来的目标文件
+    INFO(f"开始解压上传的目标文件{Package_Filename}...")
     try:
-        unzip_file(UploadPackageFile, None)
+        # unzip_file(Fuzz_Fileconfig)
         update_fuzz_state(FuzzStateFile, "unzip_target_file", True)
     except Exception as e:
         ERR(f"解压目标文件{Package_Filename}失败: {e},整个Fuzz无法启动!运行终止")
@@ -85,8 +88,9 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
         return
 
     # 步骤1: 编译目标的OpenAPI文档
+    INFO(f"开始编译目标的OpenAPI文档{APISpec_Filename}...")
     try:
-        # compile_spec(Fuzz_config)
+        # compile_spec(Fuzz_Fileconfig)
         update_fuzz_state(FuzzStateFile, "compile_openapi_document", True)
     except Exception as e:
         print(f"编译OpenAPI文档失败: {e},整个Fuzz无法启动!运行终止")
@@ -94,22 +98,30 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
         return
 
     # 步骤2: 执行Build.sh编译目标程序
+    INFO(f"开始执行{CompileScript_Filename}...")
     try:
-        # compile_target(config)
+        # compile_target(Fuzz_Fileconfig)
         update_fuzz_state(FuzzStateFile, "execute_build_script", True)
     except Exception as e:
         ERR(f"执行{CompileScriptFile}失败: {e},可能存在问题!")
         update_fuzz_state(FuzzStateFile, "execute_build_script", False)
 
     # 步骤3: 执行Start.sh启动目标程序
+    INFO(f"开始执行{StartScript_Filename}...")
     try:
-        # execute_script(config)
+        WebTargetProcess = execute_script(Fuzz_Fileconfig)
         update_fuzz_state(FuzzStateFile, "execute_start_script", True)
     except Exception as e:
         ERR(f"执行{StartScriptFile}失败: {e},可能存在问题!")
         update_fuzz_state(FuzzStateFile, "execute_start_script", False)
+    print(WebTargetProcess.pid)
+    # 捕获 SIGINT 信号并执行清理操作
+    signal.signal(signal.SIGINT, lambda signal, frame: handle_exit_signal(signal, frame, WebTargetProcess))
+    # 注册程序退出时执行清理函数
+    atexit.register(cleanup, WebTargetProcess)
 
     # 步骤4: 启动Fuzz程序
+    INFO(f"开始启动Fuzz程序...")
     try:
         # start_fuzzing(config)
         update_fuzz_state(FuzzStateFile, "start_fuzzing", True)
@@ -119,6 +131,7 @@ def AutoFuzzMain(jsonfile,UploadPath,FuzzStateFilePath):
         return
 
     # 步骤5: 输出Fuzz测试结果
+    INFO(f"开始输出Fuzz测试结果...")
     try:
         # output_fuzzing_results(config)
         update_fuzz_state(FuzzStateFile, "output_fuzzing_results", True)
@@ -132,18 +145,16 @@ if __name__ == '__main__':
     # 获取当前文件所在的目录
     current_directory = os.path.dirname(current_file_path)
 
-    print(f"当前文件的路径: {current_file_path}")
-    print(f"当前文件所在的目录: {current_directory}")
     parser = argparse.ArgumentParser()
     parser.add_argument('--jsonfile',
                         help='读取json文件',
                         type=str, required=True, default=None) 
     parser.add_argument('--uploadPath',
                         help='上传的压缩包文件路径',
-                        type=str, required=True, default=os.path.join(current_directory, 'ExampleInput'))  
+                        type=str, required=False, default=os.path.join(current_directory, 'ExampleInput'))  
     parser.add_argument('--FuzzStateOutputPath',
                         help='希望Fuzz状态的输出路径',
-                        type=str, required=True, default=os.path.join(current_directory, 'TestDir'))  
+                        type=str, required=False, default=os.path.join(current_directory, 'TestDir'))  
     parser.add_argument('--ALLFuzzWorkPath',
                         help='所有项目希望工作的目录',
                         type=str, required=False, default=os.path.join(current_directory, 'TestDir')) 

@@ -1,10 +1,10 @@
 {
     "project_id" : "1",
     "fuzz_task_name": "example_fuzz_task",
-    "package_filename": "fuzz_target_package.zip",
+    "package_filename": "task1.zip",
     "api_spec_name": "open_api_3.yaml",
-    "compile_script_name": "compile_fuzz_target.sh",
-    "start_script_name": "start_fuzz_target.sh",
+    "compile_script_name": "build.sh",
+    "start_script_name": "start.sh",
     "fuzz_execution_time": "2024-11-13T10:00:00Z",
     "target_ip": "192.168.1.100",
     "target_port": "8080",
